@@ -1,12 +1,7 @@
-const { ApolloServer, gql } = require('apollo-server');
+const express = require('express');
+const { ApolloServer, gql } = require('apollo-server-express');
 const mysql = require('mysql');
-
-// Definir el esquema de GraphQL
-const typeDefs = gql`
-  type Query {
-    login(username: String!, password: String!): String
-  }
-`;
+const cors = require('cors');
 
 // Configuración de la base de datos MySQL
 const db = mysql.createPool({
@@ -15,6 +10,22 @@ const db = mysql.createPool({
   password: 'YqUZn6T6AxLYc5k',
   database: 'christopherobin_practiceclientserver'
 });
+
+// Conectar a la base de datos
+db.getConnection((err) => {
+  if (err) {
+    console.error('Error connecting to the database:', err);
+    return;
+  }
+  console.log('Connected to the database');
+});
+
+// Definir el esquema de GraphQL
+const typeDefs = gql`
+  type Query {
+    login(username: String!, password: String!): String
+  }
+`;
 
 // Definir los resolvers para las operaciones GraphQL
 const resolvers = {
@@ -25,9 +36,15 @@ const resolvers = {
           'SELECT * FROM usuarios WHERE username = ? AND password = ?',
           [username, password],
           (err, results) => {
-            if (err) return reject(err);
-            if (results.length > 0) resolve("Login Successfully");
-            else reject(new Error("Login Failed"));
+            if (err) {
+              console.error('Database query error:', err);
+              return reject('Database query error');
+            }
+            if (results.length > 0) {
+              resolve("Login Successfully");
+            } else {
+              resolve("Invalid credentials");
+            }
           }
         );
       });
@@ -35,10 +52,25 @@ const resolvers = {
   }
 };
 
-// Crear y ejecutar el servidor Apollo
-const server = new ApolloServer({ typeDefs, resolvers });
+// Crear el servidor Apollo con configuración de CORS
+async function startApolloServer() {
+  const app = express();
 
-server.listen().then(({ url }) => {
-  console.log(`🚀 Server ready at ${url}`);
-  console.log('El servidor está activo y funcionando correctamente.');
-});
+  // Configurar CORS
+  app.use(cors({
+    origin: ['http://localhost:3000', 'http://192.168.1.34:3000', 'https://studio.apollographql.com'],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+    allowedHeaders: 'Content-Type, Authorization',
+  }));
+
+  const server = new ApolloServer({ typeDefs, resolvers });
+  await server.start();
+  server.applyMiddleware({ app, path: '/graphql', cors: false });
+
+  app.listen({ port: 4000 }, () => {
+    console.log(`🚀 Server ready at http://localhost:4000/graphql`);
+  });
+}
+
+startApolloServer();
