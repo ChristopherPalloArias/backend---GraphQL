@@ -58,7 +58,7 @@ async function startApolloServer() {
 
   // Configurar CORS
   app.use(cors({
-    origin: ['http://localhost:3000', 'http://192.168.1.34:3000', 'https://studio.apollographql.com'],
+    origin: ['http://localhost:4001', 'http://192.168.1.34:4001', 'https://studio.apollographql.com'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
     allowedHeaders: 'Content-Type, Authorization',
