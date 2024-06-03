@@ -69,6 +69,7 @@ async function startApolloServer() {
   const server = new ApolloServer({ typeDefs, resolvers });
   await server.start();
   // Aplicar middleware de Apollo Server a la aplicación Express
+  //Define el endpoint único para todas las operaciones de GraphQL
   server.applyMiddleware({ app, path: '/graphql', cors: false });
 
   // Iniciar el servidor en el puerto 4000
